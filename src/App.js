@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const ResultsEntry = () => {
   const [step, setStep] = useState(1);
@@ -10,6 +10,8 @@ const ResultsEntry = () => {
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [semiFinalTeams, setSemiFinalTeams] = useState({ east: [], west: [] });
+  const [confFinalTeams, setConfFinalTeams] = useState({ east: [], west: [] });
 
   const eastTeams = ['Celtics', 'Bucks', '76ers', 'Heat', 'Knicks', 'Cavaliers', 'Nets', 'Hawks'];
   const westTeams = ['Nuggets', 'Suns', 'Warriors', 'Lakers', 'Clippers', 'Grizzlies', 'Mavericks', 'Kings'];
@@ -31,7 +33,7 @@ const ResultsEntry = () => {
   const saveResultsToDatabase = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('https://nba-playoff-predictor.onrender.com/api/results', { // Replace with your backend URL
+      const response = await fetch('https://nba-playoff-predictor.onrender.com/api/results', { // Replace with your actual backend URL
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(results),
@@ -44,6 +46,33 @@ const ResultsEntry = () => {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (step >= 2) {
+      const eastWinners = Object.entries(results.firstRound)
+        .filter(([key, value]) => key.startsWith('east') && value.winner)
+        .map(([, value]) => value.winner);
+      const westWinners = Object.entries(results.firstRound)
+        .filter(([key, value]) => key.startsWith('west') && value.winner)
+        .map(([, value]) => value.winner);
+      setSemiFinalTeams({
+        east: eastWinners.length === 4 ? eastWinners : eastWinners.concat(Array(4 - eastWinners.length).fill('TBD')),
+        west: westWinners.length === 4 ? westWinners : westWinners.concat(Array(4 - westWinners.length).fill('TBD'))
+      });
+    }
+    if (step >= 3) {
+      const eastConfWinners = Object.entries(results.semifinals)
+        .filter(([key, value]) => key.startsWith('east') && value.winner)
+        .map(([, value]) => value.winner);
+      const westConfWinners = Object.entries(results.semifinals)
+        .filter(([key, value]) => key.startsWith('west') && value.winner)
+        .map(([, value]) => value.winner);
+      setConfFinalTeams({
+        east: eastConfWinners.length === 2 ? eastConfWinners : eastConfWinners.concat(Array(2 - eastConfWinners.length).fill('TBD')),
+        west: westConfWinners.length === 2 ? westConfWinners : westConfWinners.concat(Array(2 - westConfWinners.length).fill('TBD'))
+      });
+    }
+  }, [results, step]);
 
   const Matchup = ({ teams, round, matchupId, tooltip }) => (
     <div className="bg-white p-4 rounded-lg shadow-md mb-4">
@@ -102,11 +131,23 @@ const ResultsEntry = () => {
             <h2 className="text-2xl font-bold mb-4">Conference Semifinals Results</h2>
             <h3 className="font-semibold mb-2">Eastern Conference</h3>
             {Array(2).fill().map((_, i) => (
-              <Matchup key={`east-semi-${i}`} teams={['East Team ' + (i*2+1), 'East Team ' + (i*2+2)]} round="semifinals" matchupId={`east-semi-${i}`} tooltip="Enter the result" />
+              <Matchup 
+                key={`east-semi-${i}`} 
+                teams={[semiFinalTeams.east[i*2] || 'TBD', semiFinalTeams.east[i*2+1] || 'TBD']} 
+                round="semifinals" 
+                matchupId={`east-semi-${i}`} 
+                tooltip="Enter the result" 
+              />
             ))}
             <h3 className="font-semibold mb-2 mt-4">Western Conference</h3>
             {Array(2).fill().map((_, i) => (
-              <Matchup key={`west-semi-${i}`} teams={['West Team ' + (i*2+1), 'West Team ' + (i*2+2)]} round="semifinals" matchupId={`west-semi-${i}`} tooltip="Enter the result" />
+              <Matchup 
+                key={`west-semi-${i}`} 
+                teams={[semiFinalTeams.west[i*2] || 'TBD', semiFinalTeams.west[i*2+1] || 'TBD']} 
+                round="semifinals" 
+                matchupId={`west-semi-${i}`} 
+                tooltip="Enter the result" 
+              />
             ))}
             <div className="flex gap-4 mt-6">
               <button onClick={() => setStep(1)} className="p-2 bg-gray-300 rounded">Previous</button>
@@ -119,9 +160,19 @@ const ResultsEntry = () => {
           <div>
             <h2 className="text-2xl font-bold mb-4">Conference Finals Results</h2>
             <h3 className="font-semibold mb-2">Eastern Conference</h3>
-            <Matchup teams={['East Finalist 1', 'East Finalist 2']} round="conferenceFinals" matchupId="east-final" tooltip="Enter the result" />
+            <Matchup 
+              teams={[confFinalTeams.east[0] || 'TBD', confFinalTeams.east[1] || 'TBD']} 
+              round="conferenceFinals" 
+              matchupId="east-final" 
+              tooltip="Enter the result" 
+            />
             <h3 className="font-semibold mb-2 mt-4">Western Conference</h3>
-            <Matchup teams={['West Finalist 1', 'West Finalist 2']} round="conferenceFinals" matchupId="west-final" tooltip="Enter the result" />
+            <Matchup 
+              teams={[confFinalTeams.west[0] || 'TBD', confFinalTeams.west[1] || 'TBD']} 
+              round="conferenceFinals" 
+              matchupId="west-final" 
+              tooltip="Enter the result" 
+            />
             <div className="flex gap-4 mt-6">
               <button onClick={() => setStep(2)} className="p-2 bg-gray-300 rounded">Previous</button>
               <button onClick={() => setStep(4)} className="p-2 bg-blue-600 text-white rounded hover:bg-blue-700">Next</button>
@@ -132,7 +183,15 @@ const ResultsEntry = () => {
         {step === 4 && (
           <div>
             <h2 className="text-2xl font-bold mb-4">NBA Finals Results</h2>
-            <Matchup teams={['East Champion', 'West Champion']} round="finals" matchupId="finals" tooltip="Enter the result" />
+            <Matchup 
+              teams={[
+                results.conferenceFinals['east-final']?.winner || 'TBD',
+                results.conferenceFinals['west-final']?.winner || 'TBD'
+              ]} 
+              round="finals" 
+              matchupId="finals" 
+              tooltip="Enter the result" 
+            />
             <div className="flex gap-4 mt-6">
               <button onClick={() => setStep(3)} className="p-2 bg-gray-300 rounded">Previous</button>
               <button onClick={saveResultsToDatabase} className="p-2 bg-blue-600 text-white rounded hover:bg-blue-700" disabled={isLoading}>
@@ -156,4 +215,4 @@ const ResultsEntry = () => {
   );
 };
 
-export default ResultsEntry; 
+export default ResultsEntry;
