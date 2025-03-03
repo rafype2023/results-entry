@@ -16,7 +16,8 @@ const ResultsEntry = () => {
 
   const eastTeams = ['Celtics', 'Bucks', 'Pacers', 'Heat', 'Knicks', 'Cavaliers', 'Pistons', 'Magic'];
   const westTeams = ['Thunder', 'Nuggets', 'Warriors', 'Lakers', 'Clippers', 'Grizzlies', 'Rockets', 'Kings'];
-  const mvpOptions = ['J. Tatum', 'G. Antetokounmpo', 'L.James', 'N. Jokic', 'S. Curry'];
+  const mvpOptions = ['J. Tatum', 'G. Antetokounmpo', 'L. James', 'N. Jokic', 'S. Curry','L. Doncic','Shai Gail'];
+
 
   const handleResult = (round, matchupId, field, value) => {
     setResults(prev => ({
@@ -47,6 +48,8 @@ const ResultsEntry = () => {
   const saveResultsToDatabase = async () => {
     setIsLoading(true);
     try {
+      // Log results to ensure games is included
+      console.log('Saving results:', JSON.stringify(results, null, 2));
       const response = await fetch('https://nba-playoff-predictor.onrender.com/api/results', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -89,7 +92,7 @@ const ResultsEntry = () => {
   }, [results, step]);
 
   const Matchup = ({ teams, round, matchupId, tooltip }) => (
-    <div className="bg-white p-4 rounded-lg shadow-md mb-4">
+    <div className="bg-white p-4 rounded-lg shadow-md mb-6 relative group">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <img src={`/${teams[0].toLowerCase()}.png`} alt={`${teams[0]} logo`} className="w-8 h-8" onError={(e) => (e.target.src = '/placeholder-logo.png')} />
@@ -101,17 +104,31 @@ const ResultsEntry = () => {
           <img src={`/${teams[1].toLowerCase()}.png`} alt={`${teams[1]} logo`} className="w-8 h-8" onError={(e) => (e.target.src = '/placeholder-logo.png')} />
         </div>
       </div>
-      <select className="mt-2 p-2 rounded w-full border" value={results[round][matchupId]?.winner || ''} onChange={(e) => handleResult(round, matchupId, 'winner', e.target.value)}>
+      <select
+        className="mt-4 p-2 rounded w-full border focus:ring-2 focus:ring-blue-500"
+        value={results[round][matchupId]?.winner || ''}
+        onChange={(e) => handleResult(round, matchupId, 'winner', e.target.value)}
+      >
         <option value="">Select Winner</option>
-        {teams.map(team => <option key={team} value={team}>{team}</option>)}
+        {teams.map(team => (
+          <option key={team} value={team}>{team}</option>
+        ))}
       </select>
-      <select className="mt-4 p-2 rounded w-full border" value={results[round][matchupId]?.games || ''} onChange={(e) => handleResult(round, matchupId, 'games', e.target.value)} disabled={!results[round][matchupId]?.winner}>
+      <select
+        className="mt-6 p-2 rounded w-full border focus:ring-2 focus:ring-blue-500"
+        value={results[round][matchupId]?.games || ''}
+        onChange={(e) => handleResult(round, matchupId, 'games', e.target.value)}
+        disabled={!results[round][matchupId]?.winner}
+      >
         <option value="">Select Games</option>
         <option value="4-0">4-0</option>
         <option value="4-1">4-1</option>
         <option value="4-2">4-2</option>
         <option value="4-3">4-3</option>
       </select>
+      <div className="absolute hidden group-hover:block bg-gray-800 text-white text-sm p-2 rounded -top-10 left-1/2 transform -translate-x-1/2">
+        {tooltip}
+      </div>
     </div>
   );
 
