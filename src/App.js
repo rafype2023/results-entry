@@ -35,7 +35,7 @@ const ResultsEntry = () => {
   const fetchScores = async () => {
     try {
       const response = await fetch('https://nba-playoff-predictor.onrender.com/api/scores');
-      if (!response.ok) throw new Error('Failed to fetch scores');
+      if (!response.ok) throw new Error(`Server responded with ${response.status}`);
       const data = await response.json();
       setScores(data);
       setStep(6);
@@ -47,7 +47,7 @@ const ResultsEntry = () => {
   const saveResultsToDatabase = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('https://nba-playoff-predictor.onrender.com/api/results', { // Replace with your actual backend URL
+      const response = await fetch('https://nba-playoff-predictor.onrender.com/api/results', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(results),
