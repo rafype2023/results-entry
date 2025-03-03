@@ -12,9 +12,11 @@ const ResultsEntry = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [semiFinalTeams, setSemiFinalTeams] = useState({ east: [], west: [] });
   const [confFinalTeams, setConfFinalTeams] = useState({ east: [], west: [] });
+  const [scores, setScores] = useState([]);
 
   const eastTeams = ['Celtics', 'Bucks', '76ers', 'Heat', 'Knicks', 'Cavaliers', 'Nets', 'Hawks'];
   const westTeams = ['Nuggets', 'Suns', 'Warriors', 'Lakers', 'Clippers', 'Grizzlies', 'Mavericks', 'Kings'];
+  const mvpOptions = ['J. Tatum', 'G. Antetokounmpo', 'J. Embiid', 'N. Jokic', 'S. Curry'];
 
   const handleResult = (round, matchupId, field, value) => {
     setResults(prev => ({
@@ -30,6 +32,18 @@ const ResultsEntry = () => {
     setError('');
   };
 
+  const fetchScores = async () => {
+    try {
+      const response = await fetch('https://your-backend-name.onrender.com/api/scores');
+      if (!response.ok) throw new Error('Failed to fetch scores');
+      const data = await response.json();
+      setScores(data);
+      setStep(6);
+    } catch (err) {
+      setError(`Failed to fetch scores: ${err.message}`);
+    }
+  };
+
   const saveResultsToDatabase = async () => {
     setIsLoading(true);
     try {
@@ -39,7 +53,7 @@ const ResultsEntry = () => {
         body: JSON.stringify(results),
       });
       if (!response.ok) throw new Error(`Server responded with ${response.status}`);
-      setStep(5);
+      await fetchScores();
     } catch (err) {
       setError(`Failed to save results: ${err.message}`);
     } finally {
@@ -106,9 +120,9 @@ const ResultsEntry = () => {
       <div className="max-w-3xl mx-auto p-6 bg-white rounded-xl shadow-lg">
         <div className="mb-6">
           <div className="w-full bg-gray-200 rounded-full h-3">
-            <div className="bg-blue-600 h-3 rounded-full" style={{ width: `${(step / 5) * 100}%` }}></div>
+            <div className="bg-blue-600 h-3 rounded-full" style={{ width: `${(step / 6) * 100}%` }}></div>
           </div>
-          <p className="text-sm text-gray-600 mt-1">Step {step} of 5</p>
+          <p className="text-sm text-gray-600 mt-1">Step {step} of 6</p>
         </div>
 
         {step === 1 && (
@@ -192,6 +206,16 @@ const ResultsEntry = () => {
               matchupId="finals" 
               tooltip="Enter the result" 
             />
+            <select
+              className="w-full p-2 rounded mt-2 border focus:ring-2 focus:ring-blue-500"
+              value={results.finals.finals?.mvp || ''}
+              onChange={(e) => handleResult('finals', 'finals', 'mvp', e.target.value)}
+            >
+              <option value="">Select Finals MVP</option>
+              {mvpOptions.map(player => (
+                <option key={player} value={player}>{player}</option>
+              ))}
+            </select>
             <div className="flex gap-4 mt-6">
               <button onClick={() => setStep(3)} className="p-2 bg-gray-300 rounded">Previous</button>
               <button onClick={saveResultsToDatabase} className="p-2 bg-blue-600 text-white rounded hover:bg-blue-700" disabled={isLoading}>
@@ -205,6 +229,18 @@ const ResultsEntry = () => {
           <div>
             <h2 className="text-2xl font-bold mb-4">Results Submitted</h2>
             <pre className="bg-gray-100 p-4 rounded">{JSON.stringify(results, null, 2)}</pre>
+            <button onClick={() => setStep(1)} className="mt-4 p-2 bg-blue-600 text-white rounded hover:bg-blue-700">Start Over</button>
+          </div>
+        )}
+
+        {step === 6 && (
+          <div>
+            <h2 className="text-2xl font-bold mb-4">Prediction Scores</h2>
+            <ul className="bg-gray-100 p-4 rounded">
+              {scores.map((score, index) => (
+                <li key={index} className="py-2">{score.user}: {score.score} points</li>
+              ))}
+            </ul>
             <button onClick={() => setStep(1)} className="mt-4 p-2 bg-blue-600 text-white rounded hover:bg-blue-700">Start Over</button>
           </div>
         )}
