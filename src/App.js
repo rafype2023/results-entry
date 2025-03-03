@@ -34,7 +34,7 @@ const ResultsEntry = () => {
 
   const fetchScores = async () => {
     try {
-      const response = await fetch('https://your-backend-name.onrender.com/api/scores');
+      const response = await fetch('https://nba-playoff-predictor.onrender.com/api/scores');
       if (!response.ok) throw new Error('Failed to fetch scores');
       const data = await response.json();
       setScores(data);
