@@ -14,7 +14,7 @@ const ResultsEntry = () => {
   const [confFinalTeams, setConfFinalTeams] = useState({ east: [], west: [] });
   const [scores, setScores] = useState([]);
 
-  const eastTeams = ['Celtics', 'Bucks', 'Pacers', 'Heat', 'Knicks', 'Cavaliers', 'Pistonss', 'Magic'];
+  const eastTeams = ['Celtics', 'Bucks', 'Pacers', 'Heat', 'Knicks', 'Cavaliers', 'Pistons', 'Magic'];
   const westTeams = ['Thunder', 'Nuggets', 'Warriors', 'Lakers', 'Clippers', 'Grizzlies', 'Rockets', 'Kings'];
   const mvpOptions = ['J. Tatum', 'G. Antetokounmpo', 'L.James', 'N. Jokic', 'S. Curry'];
 
